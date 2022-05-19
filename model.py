@@ -10,6 +10,7 @@ import numpy as np
 from post_clustering import spectral_clustering, acc, nmi
 import scipy.io as sio
 import math
+import pandas as pd
 
 
 class AutoEncoder(nn.Module):
@@ -150,51 +151,86 @@ if __name__ == "__main__":
         os.makedirs(args.save_dir)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     db = args.db
-    if db == "coil20":
+    # if db == "coil20":
+    #     # load data
+    #     data = sio.loadmat("datasets/COIL20.mat")
+    #     x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
+    #     y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
+
+    #     # network and optimization parameters
+    #     num_sample = x.shape[0]
+    #     channels = [1, 15]
+    #     kernels = [3]
+    #     epochs = 40
+    #     weight_coef = 1.0
+    #     weight_selfExp = 75
+
+    #     # post clustering parameters
+    #     alpha = 0.04  # threshold of C
+    #     dim_subspace = 12  # dimension of each subspace
+    #     ro = 8  #
+    #     warnings.warn(
+    #         "You can uncomment line#64 in post_clustering.py to get better result for this dataset!"
+    #     )
+    # elif db == "coil100":
+    #     # load data
+    #     data = sio.loadmat("datasets/COIL100.mat")
+    #     x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
+    #     y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
+
+    #     # network and optimization parameters
+    #     num_sample = x.shape[0]
+    #     channels = [1, 50]
+    #     kernels = [5]
+    #     epochs = 120
+    #     weight_coef = 1.0
+    #     weight_selfExp = 15
+
+    #     # post clustering parameters
+    #     alpha = 0.04  # threshold of C
+    #     dim_subspace = 12  # dimension of each subspace
+    #     ro = 8  #
+    # elif db == "orl":
+    #     # load data
+    #     data = sio.loadmat("datasets/ORL_32x32.mat")
+    #     x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
+    #     y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
+    #     # network and optimization parameters
+    #     num_sample = x.shape[0]
+    #     channels = [1, 3, 3, 5]
+    #     kernels = [3, 3, 3]
+    #     epochs = 700
+    #     weight_coef = 2.0
+    #     weight_selfExp = 0.2
+
+    #     # post clustering parameters
+    #     alpha = 0.2  # threshold of C
+    #     dim_subspace = 3  # dimension of each subspace
+    #     ro = 1  #
+
+    if db == "bitcoin":
         # load data
-        data = sio.loadmat("datasets/COIL20.mat")
-        x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
+        # data = sio.loadmat("datasets/ORL_32x32.mat")
+        # x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
+        # y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
+
+        data = pd.read_csv("cryp.csv")
+        x = np.array(data["rate"].tolist())
+        y = np.array(data["label"].tolist())
         y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
+        # X_train = X[:3500]
+        # y_train = y[:3500]
+        # X_test = X[3500:]
+        # y_test = y[3500:]
+        # train_data= TimeseriesDataset(X_train,y_train)
+        # train_present = X_train[3500:]
+        # test_data= TimeseriesDataset(X_test,y_test)
+        # # train_dataset = TimeseriesDataset(X_lstm, y_lstm, seq_len=4)
+        # train_loader = torch.utils.data.DataLoader(train_data, batch_size = args.batch_size, shuffle = False)
+        # test_loader = torch.utils.data.DataLoader(test_data, batch_size = args.batch_size, shuffle = False)
 
-        # network and optimization parameters
-        num_sample = x.shape[0]
-        channels = [1, 15]
-        kernels = [3]
-        epochs = 40
-        weight_coef = 1.0
-        weight_selfExp = 75
-
-        # post clustering parameters
-        alpha = 0.04  # threshold of C
-        dim_subspace = 12  # dimension of each subspace
-        ro = 8  #
-        warnings.warn(
-            "You can uncomment line#64 in post_clustering.py to get better result for this dataset!"
-        )
-    elif db == "coil100":
-        # load data
-        data = sio.loadmat("datasets/COIL100.mat")
-        x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
-        y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
-
-        # network and optimization parameters
-        num_sample = x.shape[0]
-        channels = [1, 50]
-        kernels = [5]
-        epochs = 120
-        weight_coef = 1.0
-        weight_selfExp = 15
-
-        # post clustering parameters
-        alpha = 0.04  # threshold of C
-        dim_subspace = 12  # dimension of each subspace
-        ro = 8  #
-    elif db == "orl":
-        # load data
-        data = sio.loadmat("datasets/ORL_32x32.mat")
-        x, y = data["fea"].reshape((-1, 1, 32, 32)), data["gnd"]
-        y = np.squeeze(y - 1)  # y in [0, 1, ..., K-1]
         # network and optimization parameters
         num_sample = x.shape[0]
         channels = [1, 3, 3, 5]
@@ -208,7 +244,12 @@ if __name__ == "__main__":
         dim_subspace = 3  # dimension of each subspace
         ro = 1  #
 
-    dscnet = DSCNet(num_samples=num_sample, channels=channels, kernels=kernels)
+    # dscnet = DSCNet(num_samples=num_sample, channels=channels, kernels=kernels)
+    dscnet = DSCNet(
+        num_samples=NUM_SAMPLES,
+        sequence_length=SEQUENCE_LENGTH,
+        hidden_sizes=[3, 3, 5],
+    )
     dscnet.to(device)
 
     # load the pretrained weights which are provided by the original author in
